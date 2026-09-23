@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什麼 - 北醫美食</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #2d1f0f 0%, #4a3520 50%, #2d1f0f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .machine-container {
+            background: linear-gradient(180deg, #8b6914 0%, #6b4e0a 50%, #4a3520 100%);
+            border: 10px solid #5c4310;
+            border-radius: 8px;
+            padding: 15px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(255, 200, 100, 0.15);
+        }
+
+        .top-display {
+            background: #000;
+            border: 5px solid #d4a017;
+            border-radius: 5px;
+            padding: 15px 25px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .led-label {
+            color: #ffd700;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .led-value {
+            color: #ffd700;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 0 0 20px #ffd700;
+            animation: ledGlow 1s infinite alternate;
+        }
+
+        @keyframes ledGlow {
+            from { text-shadow: 0 0 15px #ffd700; }
+            to { text-shadow: 0 0 25px #ffd700; }
+        }
+
+        .main-screen {
+            background: linear-gradient(to bottom, #3d2a15 0%, #2d1f0f 60%, #1a1208 100%);
+            border: 8px solid #5c4310;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            min-height: 400px;
+            position: relative;
+            display: flex;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        .main-screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 200, 100, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 180, 80, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .multiplier-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 60px;
+            z-index: 1;
+        }
+
+        .multiplier-item {
+            background: #1a1a1a;
+            border: 3px solid #d4a017;
+            border-radius: 5px;
+            padding: 10px 6px;
+            text-align: center;
+            color: #ffd700;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .multiplier-item.active {
+            background: #ffd700;
+            border-color: #ffed4e;
+            color: #000;
+            box-shadow: 0 0 25px #ffd700;
+            animation: multiplierFlash 0.5s infinite alternate;
+        }
+
+        @keyframes multiplierFlash {
+            from { background: #ffd700; }
+            to { background: #ffe066; }
+        }
+
+        .symbol-grid-area {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 350px;
+        }
+
+        .symbol-wheel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-width: 500px;
+            min-height: 380px;
+        }
+
+        .symbol-cell {
+            background: #1a1a1a;
+            border: 3px solid #d4a017;
+            border-radius: 8px;
+            width: 80px;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            padding: 5px;
+        }
+
+        .symbol-cell.active {
+            box-shadow: 0 0 40px var(--cell-glow, #ffd700), inset 0 0 25px rgba(255, 255, 255, 0.6);
+            animation: cellFlash 0.3s infinite alternate;
+            z-index: 10;
+            transform: scale(1.1);
+        }
+
+        @keyframes cellFlash {
+            from { box-shadow: 0 0 30px var(--cell-glow, #ffd700); }
+            to { box-shadow: 0 0 50px var(--cell-glow, #ffd700); }
+        }
+
+        .symbol-icon {
+            font-size: 2em;
+            margin-bottom: 2px;
+        }
+
+        .symbol-name {
+            font-size: 0.6em;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .button-panel {
+            background: #000;
+            border: 5px solid #d4a017;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .start-btn {
+            background: linear-gradient(180deg, #ffd700 0%, #e6c200 100%);
+            border: 4px solid #ffed4e;
+            border-radius: 8px;
+            padding: 20px 80px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px #ffd700, 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message-panel {
+            background: #000;
+            border: 4px solid #d4a017;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+            min-height: 50px;
+        }
+
+        .message {
+            color: #ffd700;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .message.result {
+            color: #00ff88;
+            font-size: 1.3em;
+            text-shadow: 0 0 15px #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="machine-container">
+        <div class="top-display">
+            <div class="led-label">今天吃什麼？</div>
+            <div class="led-value" id="resultDisplay">點擊開始</div>
+        </div>
+
+        <div class="main-screen">
+            <div class="multiplier-column">
+                <div class="multiplier-item" id="mult5">x5</div>
+                <div class="multiplier-item" id="mult10">x10</div>
+                <div class="multiplier-item" id="mult15">x15</div>
+                <div class="multiplier-item" id="mult20">x20</div>
+            </div>
+
+            <div class="symbol-grid-area">
+                <div class="symbol-wheel" id="symbolWheel"></div>
+            </div>
+        </div>
+
+        <div class="button-panel">
+            <button class="start-btn" onclick="startSpin()" id="startBtn">開始</button>
+        </div>
+
+        <div class="message-panel">
+            <div class="message" id="message">按「開始」隨機決定今天吃什麼！</div>
+        </div>
+    </div>
+
+    <script>
+        let isSpinning = false;
+
+        // 美食選項：甲四方、乾麵、牛排、拉麵、肉骨茶麵、麵線、義大利麵、素食、涼麵、土魠魚羹
+        const symbolTypes = [
+            { icon: '🥟', name: '甲四方', desc: '水餃', multiplier: 5, color: '#ff6b6b', bgColor: '#e85d5d', borderColor: '#ff5252' },
+            { icon: '🍜', name: '乾麵', desc: '乾麵', multiplier: 10, color: '#45b7d1', bgColor: '#2e9bd1', borderColor: '#2e9bd1' },
+            { icon: '🥩', name: '牛排', desc: '牛排', multiplier: 20, color: '#e74c3c', bgColor: '#c0392b', borderColor: '#c0392b' },
+            { icon: '🍜', name: '拉麵', desc: '拉麵', multiplier: 10, color: '#f9ca24', bgColor: '#e6b800', borderColor: '#f39c12' },
+            { icon: '🍲', name: '肉骨茶麵', desc: '肉骨茶麵', multiplier: 15, color: '#8e44ad', bgColor: '#7d3c98', borderColor: '#7d3c98' },
+            { icon: '🍜', name: '麵線', desc: '麵線', multiplier: 10, color: '#a29bfe', bgColor: '#8b7fd8', borderColor: '#8b7fd8' },
+            { icon: '🍝', name: '義大利麵', desc: '義大利麵', multiplier: 15, color: '#6c5ce7', bgColor: '#5f3dc4', borderColor: '#5f3dc4' },
+            { icon: '🥬', name: '素食', desc: '素食', multiplier: 10, color: '#00b894', bgColor: '#00a085', borderColor: '#00a085' },
+            { icon: '🍜', name: '涼麵', desc: '涼麵', multiplier: 10, color: '#74b9ff', bgColor: '#0984e3', borderColor: '#0984e3' },
+            { icon: '🍲', name: '土魠魚羹', desc: '土魠魚羹', multiplier: 15, color: '#fd79a8', bgColor: '#e84393', borderColor: '#e84393' }
+        ];
+
+        let prizes = [];
+
+        function initSymbolGrid() {
+            const wheel = document.getElementById('symbolWheel');
+            wheel.innerHTML = '';
+            
+            const centerX = wheel.offsetWidth / 2 || 250;
+            const centerY = wheel.offsetHeight / 2 || 190;
+            const cellWidth = 80;
+            const cellHeight = 90;
+            const spacing = 8;
+            const frameWidth = 420;
+            const frameHeight = 300;
+            const frameLeft = centerX - frameWidth / 2;
+            const frameRight = centerX + frameWidth / 2;
+            const frameTop = centerY - frameHeight / 2;
+            const frameBottom = centerY + frameHeight / 2;
+            const horizontalCount = Math.floor(frameWidth / (cellWidth + spacing));
+            const verticalCount = Math.floor(frameHeight / (cellHeight + spacing));
+            
+            const positions = [];
+            let index = 0;
+            
+            for (let i = 0; i < horizontalCount; i++) {
+                positions.push({ x: frameLeft + i * (cellWidth + spacing), y: frameTop, index: index++ });
+            }
+            for (let i = 1; i < verticalCount - 1; i++) {
+                const y = frameTop + i * (cellHeight + spacing);
+                positions.push({ x: frameRight - cellWidth, y: y, index: index++ });
+            }
+            for (let i = horizontalCount - 1; i >= 0; i--) {
+                positions.push({ x: frameLeft + i * (cellWidth + spacing), y: frameBottom - cellHeight, index: index++ });
+            }
+            for (let i = verticalCount - 2; i > 0; i--) {
+                const y = frameTop + i * (cellHeight + spacing);
+                positions.push({ x: frameLeft, y: y, index: index++ });
+            }
+            
+            prizes.length = 0;
+            positions.forEach((pos, idx) => {
+                const symbolTypeIndex = idx % symbolTypes.length;
+                const symbolType = symbolTypes[symbolTypeIndex];
+                const prize = { ...symbolType, index: idx };
+                prizes.push(prize);
+                
+                const cell = document.createElement('div');
+                cell.className = 'symbol-cell';
+                cell.dataset.index = idx;
+                cell.id = `symbolCell${idx}`;
+                cell.style.left = pos.x + 'px';
+                cell.style.top = pos.y + 'px';
+                cell.style.background = symbolType.bgColor || symbolType.color;
+                cell.style.borderColor = symbolType.borderColor || symbolType.color;
+                cell.style.setProperty('--cell-glow', symbolType.color);
+                cell.innerHTML = `
+                    <div class="symbol-icon">${symbolType.icon}</div>
+                    <div class="symbol-name">${symbolType.name}</div>
+                `;
+                wheel.appendChild(cell);
+            });
+        }
+
+        function clearMultiplierLights() {
+            [5, 10, 15, 20].forEach(mult => {
+                const el = document.getElementById(`mult${mult}`);
+                if (el) el.classList.remove('active');
+            });
+        }
+
+        function lightMultiplier(multiplier) {
+            clearMultiplierLights();
+            if ([5, 10, 15, 20].includes(multiplier)) {
+                const el = document.getElementById(`mult${multiplier}`);
+                if (el) el.classList.add('active');
+            }
+        }
+
+        function startSpin() {
+            if (isSpinning) return;
+            if (!prizes || prizes.length === 0) {
+                showMessage('請重新載入頁面！', 'info');
+                return;
+            }
+            
+            isSpinning = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('resultDisplay').textContent = '轉動中...';
+            showMessage('轉動中...', 'info');
+            
+            clearMultiplierLights();
+            
+            const resultIndex = Math.floor(Math.random() * prizes.length);
+            const result = prizes[resultIndex];
+            
+            runLights(resultIndex, result);
+        }
+
+        function runLights(targetIndex, result) {
+            const cells = document.querySelectorAll('.symbol-cell');
+            let currentIndex = 0;
+            let speed = 80;
+            let cycles = 0;
+            const totalCycles = 24 + Math.floor(Math.random() * 8);
+            
+            function moveLight() {
+                cells.forEach(cell => cell.classList.remove('active'));
+                
+                const currentCell = cells[currentIndex];
+                if (currentCell) currentCell.classList.add('active');
+                
+                currentIndex = (currentIndex + 1) % cells.length;
+                cycles++;
+                
+                if (cycles < totalCycles) {
+                    setTimeout(moveLight, speed);
+                    if (cycles > totalCycles - 6) speed += 12;
+                } else {
+                    cells.forEach(cell => cell.classList.remove('active'));
+                    if (cells[targetIndex]) cells[targetIndex].classList.add('active');
+                    lightMultiplier(result.multiplier);
+                    
+                    setTimeout(() => {
+                        document.getElementById('resultDisplay').textContent = result.name === result.desc ? result.name : result.name + ' ' + result.desc;
+                        showMessage('已選定！', 'result');
+                        isSpinning = false;
+                        document.getElementById('startBtn').disabled = false;
+                    }, 500);
+                }
+            }
+            moveLight();
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+        }
+
+        initSymbolGrid();
+    </script>
+</body>
+</html>

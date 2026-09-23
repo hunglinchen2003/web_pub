@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>導師請吃飯</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a3a5c 0%, #2d5a87 50%, #1a3a5c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .machine-container {
+            background: linear-gradient(180deg, #2d5a87 0%, #1a3a5c 50%, #0d2840 100%);
+            border: 10px solid #3d6a97;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(100, 180, 255, 0.1);
+        }
+
+        .page-title {
+            text-align: center;
+            color: #87ceeb;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(135, 206, 235, 0.8);
+        }
+
+        /* 遊戲區塊 */
+        .game-section {
+            background: rgba(0, 20, 40, 0.6);
+            border: 4px solid #4a90c4;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .game-section h2 {
+            color: #87ceeb;
+            font-size: 1.2em;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #4a90c4;
+        }
+
+        .top-display {
+            background: #000;
+            border: 4px solid #4a90c4;
+            border-radius: 5px;
+            padding: 12px 20px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .led-label {
+            color: #87ceeb;
+            font-size: 0.9em;
+            margin-bottom: 4px;
+        }
+
+        .led-value {
+            color: #87ceeb;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-shadow: 0 0 15px #87ceeb;
+        }
+
+        .led-value.highlight {
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+        }
+
+        .main-screen {
+            background: linear-gradient(to bottom, #1a2a3a 0%, #0d1a25 100%);
+            border: 6px solid #4a90c4;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            min-height: 320px;
+            position: relative;
+            display: flex;
+            gap: 12px;
+            overflow: hidden;
+        }
+
+        .main-screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(74, 144, 196, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .multiplier-column {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 50px;
+            z-index: 1;
+        }
+
+        .multiplier-item {
+            background: #0a1520;
+            border: 2px solid #4a90c4;
+            border-radius: 5px;
+            padding: 8px 4px;
+            text-align: center;
+            color: #87ceeb;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .multiplier-item.active {
+            background: #4a90c4;
+            border-color: #87ceeb;
+            color: #fff;
+            box-shadow: 0 0 20px #4a90c4;
+        }
+
+        .symbol-grid-area {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 280px;
+        }
+
+        .symbol-wheel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-width: 450px;
+            min-height: 320px;
+        }
+
+        .symbol-cell {
+            background: #0a1520;
+            border: 3px solid #4a90c4;
+            border-radius: 8px;
+            width: 72px;
+            min-height: 82px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            transition: all 0.2s;
+            padding: 4px;
+        }
+
+        .symbol-cell.active {
+            box-shadow: 0 0 35px var(--cell-glow, #87ceeb), inset 0 0 20px rgba(255, 255, 255, 0.4);
+            z-index: 10;
+            transform: scale(1.08);
+        }
+
+        .symbol-icon {
+            font-size: 1.8em;
+            margin-bottom: 2px;
+        }
+
+        .symbol-name {
+            font-size: 0.55em;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .amount-cell .symbol-name {
+            font-size: 0.7em;
+        }
+
+        .amount-cell.full-amount {
+            background: linear-gradient(135deg, #2a1a4a 0%, #1a0d2a 100%);
+            border-color: #9b59b6;
+        }
+
+        .amount-cell.full-amount .symbol-name {
+            color: #e8b4ff;
+        }
+
+        .amount-multiplier-column .multiplier-item {
+            font-size: 0.8em;
+        }
+
+        .button-panel {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            background: linear-gradient(180deg, #4a90c4 0%, #2d6a94 100%);
+            border: 4px solid #87ceeb;
+            border-radius: 8px;
+            padding: 14px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px #4a90c4;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(180deg, #00aa66 0%, #008844 100%);
+            border-color: #00ff88;
+        }
+
+        .action-btn.primary:hover:not(:disabled) {
+            box-shadow: 0 0 25px #00ff88;
+        }
+
+        .message-panel {
+            background: #000;
+            border: 4px solid #4a90c4;
+            border-radius: 5px;
+            padding: 12px;
+            margin-top: 15px;
+            text-align: center;
+            min-height: 45px;
+        }
+
+        .message {
+            color: #87ceeb;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .message.result {
+            color: #00ff88;
+            font-size: 1.2em;
+            text-shadow: 0 0 12px #00ff88;
+        }
+
+        .final-result {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(0, 100, 80, 0.3) 0%, rgba(0, 60, 50, 0.3) 100%);
+            border: 4px solid #00ff88;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .final-result.active {
+            display: block;
+            animation: resultGlow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes resultGlow {
+            from { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+            to { box-shadow: 0 0 35px rgba(0, 255, 136, 0.6); }
+        }
+
+        .final-result .result-title {
+            color: #00ff88;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .final-result .result-content {
+            color: #fff;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="machine-container">
+        <h1 class="page-title">🎓 導師請吃飯 🍽️</h1>
+
+        <!-- 遊戲一：選擇食物 -->
+        <div class="game-section">
+            <h2>① 選擇食物</h2>
+            <div class="top-display">
+                <div class="led-label">今天吃什麼？</div>
+                <div class="led-value" id="foodDisplay">點擊開始</div>
+            </div>
+
+            <div class="main-screen">
+                <div class="multiplier-column">
+                    <div class="multiplier-item" id="mult5">x5</div>
+                    <div class="multiplier-item" id="mult10">x10</div>
+                    <div class="multiplier-item" id="mult15">x15</div>
+                    <div class="multiplier-item" id="mult20">x20</div>
+                </div>
+                <div class="symbol-grid-area">
+                    <div class="symbol-wheel" id="symbolWheel"></div>
+                </div>
+            </div>
+
+            <div class="button-panel">
+                <button class="action-btn primary" onclick="startFoodSpin()" id="foodStartBtn">開始選食物</button>
+            </div>
+        </div>
+
+        <!-- 遊戲二：導師請客金額 -->
+        <div class="game-section">
+            <h2>② 導師請客金額</h2>
+            <div class="top-display">
+                <div class="led-label">導師請多少？</div>
+                <div class="led-value" id="amountDisplay">點擊開始</div>
+            </div>
+
+            <div class="main-screen">
+                <div class="multiplier-column amount-multiplier-column">
+                    <div class="multiplier-item" id="amountMult50">50</div>
+                    <div class="multiplier-item" id="amountMult100">100</div>
+                    <div class="multiplier-item" id="amountMult200">200</div>
+                    <div class="multiplier-item" id="amountMultFull">全額</div>
+                </div>
+                <div class="symbol-grid-area">
+                    <div class="symbol-wheel" id="amountWheel"></div>
+                </div>
+            </div>
+
+            <div class="button-panel">
+                <button class="action-btn primary" onclick="startAmountSpin()" id="amountStartBtn">開始選金額</button>
+            </div>
+        </div>
+
+        <div class="message-panel">
+            <div class="message" id="message">先選食物，再選導師請客金額！</div>
+        </div>
+
+        <div class="final-result" id="finalResult">
+            <div class="result-title">🎉 最終結果</div>
+            <div class="result-content" id="finalResultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let isFoodSpinning = false;
+        let selectedFood = null;
+        let selectedAmount = null;
+
+        const symbolTypes = [
+            { icon: '🥟', name: '甲四方', desc: '水餃', multiplier: 5, color: '#ff6b6b', bgColor: '#e85d5d', borderColor: '#ff5252' },
+            { icon: '🍜', name: '乾麵', desc: '乾麵', multiplier: 10, color: '#45b7d1', bgColor: '#2e9bd1', borderColor: '#2e9bd1' },
+            { icon: '🥩', name: '牛排', desc: '牛排', multiplier: 20, color: '#e74c3c', bgColor: '#c0392b', borderColor: '#c0392b' },
+            { icon: '🍜', name: '拉麵', desc: '拉麵', multiplier: 10, color: '#f9ca24', bgColor: '#e6b800', borderColor: '#f39c12' },
+            { icon: '🍲', name: '肉骨茶麵', desc: '肉骨茶麵', multiplier: 15, color: '#8e44ad', bgColor: '#7d3c98', borderColor: '#7d3c98' },
+            { icon: '🍜', name: '麵線', desc: '麵線', multiplier: 10, color: '#a29bfe', bgColor: '#8b7fd8', borderColor: '#8b7fd8' },
+            { icon: '🍝', name: '義大利麵', desc: '義大利麵', multiplier: 15, color: '#6c5ce7', bgColor: '#5f3dc4', borderColor: '#5f3dc4' },
+            { icon: '🥬', name: '素食', desc: '素食', multiplier: 10, color: '#00b894', bgColor: '#00a085', borderColor: '#00a085' },
+            { icon: '🍜', name: '涼麵', desc: '涼麵', multiplier: 10, color: '#74b9ff', bgColor: '#0984e3', borderColor: '#0984e3' },
+            { icon: '🍲', name: '土魠魚羹', desc: '土魠魚羹', multiplier: 15, color: '#fd79a8', bgColor: '#e84393', borderColor: '#e84393' }
+        ];
+
+        const amountTypes = [
+            { icon: '💰', name: '50', value: 50, color: '#4ecdc4', bgColor: '#3db8b0', borderColor: '#26d0ce' },
+            { icon: '💰', name: '100', value: 100, color: '#45b7d1', bgColor: '#2e9bd1', borderColor: '#2e9bd1' },
+            { icon: '💰', name: '150', value: 150, color: '#f9ca24', bgColor: '#e6b800', borderColor: '#f39c12' },
+            { icon: '💰', name: '200', value: 200, color: '#6c5ce7', bgColor: '#5f3dc4', borderColor: '#5f3dc4' },
+            { icon: '💰', name: '250', value: 250, color: '#00b894', bgColor: '#00a085', borderColor: '#00a085' },
+            { icon: '💰', name: '300', value: 300, color: '#a29bfe', bgColor: '#8b7fd8', borderColor: '#8b7fd8' },
+            { icon: '💰', name: '350', value: 350, color: '#fd79a8', bgColor: '#e84393', borderColor: '#e84393' },
+            { icon: '💰', name: '400', value: 400, color: '#e74c3c', bgColor: '#c0392b', borderColor: '#c0392b' },
+            { icon: '💰', name: '450', value: 450, color: '#74b9ff', bgColor: '#0984e3', borderColor: '#0984e3' },
+            { icon: '💰', name: '500', value: 500, color: '#ff7675', bgColor: '#ff5252', borderColor: '#ff5252' },
+            { icon: '🎉', name: '全額', value: 'full', color: '#ffd700', bgColor: '#9b59b6', borderColor: '#9b59b6', isFull: true }
+        ];
+        let amountPrizes = [];
+        let isAmountSpinning = false;
+
+        let prizes = [];
+
+        function initSymbolGrid() {
+            const wheel = document.getElementById('symbolWheel');
+            wheel.innerHTML = '';
+            
+            const centerX = wheel.offsetWidth / 2 || 225;
+            const centerY = wheel.offsetHeight / 2 || 160;
+            const cellWidth = 72;
+            const cellHeight = 82;
+            const spacing = 6;
+            const frameWidth = 380;
+            const frameHeight = 270;
+            const frameLeft = centerX - frameWidth / 2;
+            const frameRight = centerX + frameWidth / 2;
+            const frameTop = centerY - frameHeight / 2;
+            const frameBottom = centerY + frameHeight / 2;
+            const horizontalCount = Math.floor(frameWidth / (cellWidth + spacing));
+            const verticalCount = Math.floor(frameHeight / (cellHeight + spacing));
+            
+            const positions = [];
+            let index = 0;
+            
+            for (let i = 0; i < horizontalCount; i++) {
+                positions.push({ x: frameLeft + i * (cellWidth + spacing), y: frameTop, index: index++ });
+            }
+            for (let i = 1; i < verticalCount - 1; i++) {
+                const y = frameTop + i * (cellHeight + spacing);
+                positions.push({ x: frameRight - cellWidth, y: y, index: index++ });
+            }
+            for (let i = horizontalCount - 1; i >= 0; i--) {
+                positions.push({ x: frameLeft + i * (cellWidth + spacing), y: frameBottom - cellHeight, index: index++ });
+            }
+            for (let i = verticalCount - 2; i > 0; i--) {
+                const y = frameTop + i * (cellHeight + spacing);
+                positions.push({ x: frameLeft, y: y, index: index++ });
+            }
+            
+            prizes.length = 0;
+            positions.forEach((pos, idx) => {
+                const symbolTypeIndex = idx % symbolTypes.length;
+                const symbolType = symbolTypes[symbolTypeIndex];
+                const prize = { ...symbolType, index: idx };
+                prizes.push(prize);
+                
+                const cell = document.createElement('div');
+                cell.className = 'symbol-cell';
+                cell.dataset.index = idx;
+                cell.id = `symbolCell${idx}`;
+                cell.style.left = pos.x + 'px';
+                cell.style.top = pos.y + 'px';
+                cell.style.background = symbolType.bgColor || symbolType.color;
+                cell.style.borderColor = symbolType.borderColor || symbolType.color;
+                cell.style.setProperty('--cell-glow', symbolType.color);
+                cell.innerHTML = `
+                    <div class="symbol-icon">${symbolType.icon}</div>
+                    <div class="symbol-name">${symbolType.name}</div>
+                `;
+                wheel.appendChild(cell);
+            });
+        }
+
+        function initAmountGrid() {
+            const wheel = document.getElementById('amountWheel');
+            wheel.innerHTML = '';
+            
+            const centerX = wheel.offsetWidth / 2 || 225;
+            const centerY = wheel.offsetHeight / 2 || 160;
+            const cellWidth = 72;
+            const cellHeight = 82;
+            const spacing = 6;
+            const frameWidth = 380;
+            const frameHeight = 270;
+            const frameLeft = centerX - frameWidth / 2;
+            const frameRight = centerX + frameWidth / 2;
+            const frameTop = centerY - frameHeight / 2;
+            const frameBottom = centerY + frameHeight / 2;
+            const horizontalCount = Math.floor(frameWidth / (cellWidth + spacing));
+            const verticalCount = Math.floor(frameHeight / (cellHeight + spacing));
+            
+            const positions = [];
+            let index = 0;
+            
+            for (let i = 0; i < horizontalCount; i++) {
+                positions.push({ x: frameLeft + i * (cellWidth + spacing), y: frameTop, index: index++ });
+            }
+            for (let i = 1; i < verticalCount - 1; i++) {
+                const y = frameTop + i * (cellHeight + spacing);
+                positions.push({ x: frameRight - cellWidth, y: y, index: index++ });
+            }
+            for (let i = horizontalCount - 1; i >= 0; i--) {
+                positions.push({ x: frameLeft + i * (cellWidth + spacing), y: frameBottom - cellHeight, index: index++ });
+            }
+            for (let i = verticalCount - 2; i > 0; i--) {
+                const y = frameTop + i * (cellHeight + spacing);
+                positions.push({ x: frameLeft, y: y, index: index++ });
+            }
+            
+            amountPrizes.length = 0;
+            positions.forEach((pos, idx) => {
+                const typeIndex = idx % amountTypes.length;
+                const amountType = amountTypes[typeIndex];
+                const prize = { ...amountType, index: idx };
+                amountPrizes.push(prize);
+                
+                const cell = document.createElement('div');
+                cell.className = 'symbol-cell amount-cell' + (amountType.isFull ? ' full-amount' : '');
+                cell.dataset.index = idx;
+                cell.id = `amountCell${idx}`;
+                cell.style.left = pos.x + 'px';
+                cell.style.top = pos.y + 'px';
+                cell.style.background = amountType.bgColor || amountType.color;
+                cell.style.borderColor = amountType.borderColor || amountType.color;
+                cell.style.setProperty('--cell-glow', amountType.color);
+                cell.innerHTML = `
+                    <div class="symbol-icon">${amountType.icon}</div>
+                    <div class="symbol-name">${amountType.name}${amountType.isFull ? '' : '元'}</div>
+                `;
+                wheel.appendChild(cell);
+            });
+        }
+
+        function clearMultiplierLights() {
+            [5, 10, 15, 20].forEach(mult => {
+                const el = document.getElementById(`mult${mult}`);
+                if (el) el.classList.remove('active');
+            });
+        }
+
+        function lightMultiplier(multiplier) {
+            clearMultiplierLights();
+            if ([5, 10, 15, 20].includes(multiplier)) {
+                const el = document.getElementById(`mult${multiplier}`);
+                if (el) el.classList.add('active');
+            }
+        }
+
+        function clearAmountMultiplierLights() {
+            ['50', '100', '200', 'Full'].forEach(id => {
+                const el = document.getElementById(`amountMult${id}`);
+                if (el) el.classList.remove('active');
+            });
+        }
+
+        function lightAmountMultiplier(result) {
+            clearAmountMultiplierLights();
+            if (result.value === 'full') {
+                const el = document.getElementById('amountMultFull');
+                if (el) el.classList.add('active');
+            } else if (result.value === 50) {
+                const el = document.getElementById('amountMult50');
+                if (el) el.classList.add('active');
+            } else if (result.value <= 150) {
+                const el = document.getElementById('amountMult100');
+                if (el) el.classList.add('active');
+            } else {
+                const el = document.getElementById('amountMult200');
+                if (el) el.classList.add('active');
+            }
+        }
+
+        function startFoodSpin() {
+            if (isFoodSpinning) return;
+            if (!prizes || prizes.length === 0) return;
+            
+            isFoodSpinning = true;
+            document.getElementById('foodStartBtn').disabled = true;
+            document.getElementById('foodDisplay').textContent = '轉動中...';
+            document.getElementById('foodDisplay').classList.remove('highlight');
+            showMessage('轉動中...', false);
+            
+            clearMultiplierLights();
+            selectedFood = null;
+            document.getElementById('finalResult').classList.remove('active');
+            
+            const resultIndex = Math.floor(Math.random() * prizes.length);
+            const result = prizes[resultIndex];
+            
+            runFoodLights(resultIndex, result);
+        }
+
+        function runFoodLights(targetIndex, result) {
+            const cells = document.querySelectorAll('.symbol-cell');
+            let currentIndex = 0;
+            let speed = 75;
+            let cycles = 0;
+            const totalCycles = 22 + Math.floor(Math.random() * 6);
+            
+            function moveLight() {
+                cells.forEach(cell => cell.classList.remove('active'));
+                const currentCell = cells[currentIndex];
+                if (currentCell) currentCell.classList.add('active');
+                
+                currentIndex = (currentIndex + 1) % cells.length;
+                cycles++;
+                
+                if (cycles < totalCycles) {
+                    setTimeout(moveLight, speed);
+                    if (cycles > totalCycles - 6) speed += 10;
+                } else {
+                    cells.forEach(cell => cell.classList.remove('active'));
+                    if (cells[targetIndex]) cells[targetIndex].classList.add('active');
+                    lightMultiplier(result.multiplier);
+                    
+                    setTimeout(() => {
+                        selectedFood = result;
+                        document.getElementById('foodDisplay').textContent = result.name === result.desc ? result.name : result.name + ' ' + result.desc;
+                        document.getElementById('foodDisplay').classList.add('highlight');
+                        showMessage('已選定！請選導師請客金額', true);
+                        isFoodSpinning = false;
+                        document.getElementById('foodStartBtn').disabled = false;
+                        updateFinalResult();
+                    }, 400);
+                }
+            }
+            moveLight();
+        }
+
+        function startAmountSpin() {
+            if (isAmountSpinning) return;
+            if (!amountPrizes || amountPrizes.length === 0) return;
+            
+            isAmountSpinning = true;
+            document.getElementById('amountStartBtn').disabled = true;
+            document.getElementById('amountDisplay').textContent = '轉動中...';
+            document.getElementById('amountDisplay').classList.remove('highlight');
+            showMessage('轉動中...', false);
+            
+            clearAmountMultiplierLights();
+            selectedAmount = null;
+            document.getElementById('finalResult').classList.remove('active');
+            
+            const resultIndex = Math.floor(Math.random() * amountPrizes.length);
+            const result = amountPrizes[resultIndex];
+            
+            runAmountLights(resultIndex, result);
+        }
+
+        function runAmountLights(targetIndex, result) {
+            const cells = document.querySelectorAll('#amountWheel .symbol-cell');
+            let currentIndex = 0;
+            let speed = 75;
+            let cycles = 0;
+            const totalCycles = 22 + Math.floor(Math.random() * 6);
+            
+            function moveLight() {
+                cells.forEach(cell => cell.classList.remove('active'));
+                const currentCell = cells[currentIndex];
+                if (currentCell) currentCell.classList.add('active');
+                
+                currentIndex = (currentIndex + 1) % cells.length;
+                cycles++;
+                
+                if (cycles < totalCycles) {
+                    setTimeout(moveLight, speed);
+                    if (cycles > totalCycles - 6) speed += 10;
+                } else {
+                    cells.forEach(cell => cell.classList.remove('active'));
+                    if (cells[targetIndex]) cells[targetIndex].classList.add('active');
+                    lightAmountMultiplier(result);
+                    
+                    setTimeout(() => {
+                        selectedAmount = result.value;
+                        document.getElementById('amountDisplay').textContent = 
+                            result.value === 'full' ? '全額' : result.value + ' 元';
+                        document.getElementById('amountDisplay').classList.add('highlight');
+                        showMessage(result.value === 'full' ? '導師全額請客！' : `導師請 ${result.value} 元！`, true);
+                        isAmountSpinning = false;
+                        document.getElementById('amountStartBtn').disabled = false;
+                        updateFinalResult();
+                    }, 400);
+                }
+            }
+            moveLight();
+        }
+
+        function updateFinalResult() {
+            const resultEl = document.getElementById('finalResult');
+            const contentEl = document.getElementById('finalResultContent');
+            
+            if (selectedFood && selectedAmount !== null) {
+                const amountText = selectedAmount === 'full' ? '全額' : selectedAmount + ' 元';
+                contentEl.innerHTML = `導師請客 <strong>${amountText}</strong>`;
+                resultEl.classList.add('active');
+            } else {
+                resultEl.classList.remove('active');
+            }
+        }
+
+        function showMessage(text, isResult) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = isResult === false ? 'message' : 'message result';
+        }
+
+        initSymbolGrid();
+        initAmountGrid();
+    </script>
+</body>
+</html>
