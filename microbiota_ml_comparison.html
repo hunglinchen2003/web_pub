@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>菌相 metadata 比較：IBD、T2D、CRC、AD、PD</title>
+<style>
+  :root {
+    --bg: #f3efe6;
+    --paper: #fffcf7;
+    --ink: #1c1915;
+    --muted: #5c564c;
+    --line: #e4dcd0;
+    --hero: #14211c;
+    --hero-2: #1d3028;
+    --ibd: #1b6b66;
+    --t2d: #9a5528;
+    --crc: #2c4c78;
+    --ad: #5c3d6e;
+    --pd: #3f5c38;
+    --warn: #6d3c24;
+    --warn-bg: #f6eadb;
+    --good: #1d5c45;
+    --good-bg: #e5f0ea;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+  a { color: inherit; }
+  .hero {
+    background: var(--hero);
+    color: #f6f1e7;
+    padding: 36px 24px 32px;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; }
+  .kicker {
+    margin: 0 0 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: #c9bfae;
+  }
+  h1 {
+    margin: 0 0 12px;
+    font-size: 30px;
+    line-height: 1.3;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+  .lead { margin: 0; max-width: 760px; color: #ddd4c6; font-size: 16.5px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+  .pill {
+    background: var(--hero-2);
+    border: 1px solid #31463c;
+    padding: 10px 14px;
+    min-width: 140px;
+  }
+  .pill b { display: block; font-family: Consolas, "Cascadia Mono", monospace; font-size: 22px; font-weight: 600; }
+  .pill span { color: #c9bfae; font-size: 13px; }
+  .pill.ibd b { color: #8fd0cb; }
+  .pill.t2d b { color: #f0b48a; }
+  .pill.crc b { color: #b7c9e6; }
+  .pill.ad b { color: #e0c4ea; }
+  .pill.pd b { color: #c5ddb8; }
+  nav.sub {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgba(243, 239, 230, 0.94);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(8px);
+  }
+  nav.sub .wrap { display: flex; gap: 18px; padding: 10px 0; overflow-x: auto; }
+  nav.sub a { color: var(--muted); text-decoration: none; font-size: 14px; white-space: nowrap; }
+  nav.sub a:hover { color: var(--ink); }
+  main { padding: 28px 24px 64px; }
+  section { margin: 0 0 42px; }
+  h2 { font-size: 22px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h3 { font-size: 17px; margin: 22px 0 8px; }
+  .deck { margin: 0 0 16px; color: var(--muted); max-width: 760px; }
+  .callout {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border-left: 4px solid #b56a3e;
+    padding: 12px 16px;
+    margin: 0 0 18px;
+  }
+  .callout strong { font-weight: 650; }
+  .good {
+    background: var(--good-bg);
+    color: var(--good);
+    border-left: 4px solid var(--good);
+    padding: 14px 16px;
+    margin: 0 0 18px;
+  }
+  .scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--paper); }
+  table { border-collapse: collapse; width: 100%; min-width: 1180px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  thead th { background: #f7f3eb; font-size: 13px; font-weight: 650; position: sticky; top: 0; }
+  tbody th { width: 168px; color: var(--muted); font-weight: 600; background: #fbf8f2; }
+  td.ibd { background: rgba(27, 107, 102, 0.05); }
+  td.t2d { background: rgba(154, 85, 40, 0.05); }
+  td.crc { background: rgba(44, 76, 120, 0.05); }
+  td.ad { background: rgba(92, 61, 110, 0.06); }
+  td.pd { background: rgba(63, 92, 56, 0.07); }
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    font-weight: 650;
+    padding: 1px 6px;
+    margin-bottom: 4px;
+  }
+  .tag.ibd { color: var(--ibd); background: rgba(27, 107, 102, 0.12); }
+  .tag.t2d { color: var(--t2d); background: rgba(154, 85, 40, 0.12); }
+  .tag.crc { color: var(--crc); background: rgba(44, 76, 120, 0.12); }
+  .tag.ad { color: var(--ad); background: rgba(92, 61, 110, 0.12); }
+  .tag.pd { color: var(--pd); background: rgba(63, 92, 56, 0.14); }
+  .num { font-family: Consolas, "Cascadia Mono", monospace; font-variant-numeric: tabular-nums; }
+  .bars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 14px; }
+  .barcard { background: var(--paper); border: 1px solid var(--line); padding: 14px 14px 12px; }
+  .barcard h3 { margin: 0 0 10px; font-size: 15px; }
+  .stack { display: flex; height: 22px; width: 100%; overflow: hidden; background: #ece7dc; }
+  .stack span { display: block; height: 100%; }
+  .legend { list-style: none; padding: 8px 0 0; margin: 0; font-size: 13px; color: var(--muted); }
+  .legend li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+  .sw { width: 9px; height: 9px; display: inline-block; margin-right: 6px; }
+  .grid2 { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; }
+  .card { background: var(--paper); border: 1px solid var(--line); padding: 16px 16px 8px; }
+  ol.steps { margin: 8px 0 0; padding: 0; list-style: none; counter-reset: step; }
+  ol.steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 0 0 14px 42px;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 13px;
+    font-family: Consolas, monospace;
+  }
+  .tasks { min-width: 980px; }
+  .judge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 650;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+  .judge.go { background: var(--good-bg); color: var(--good); }
+  .judge.mid { background: #f4ecd4; color: #6a5420; }
+  .judge.stop { background: #f3e4dc; color: #7a3b2a; }
+  .trio { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .dossier { background: var(--paper); border: 1px solid var(--line); padding: 0 0 8px; }
+  .dossier header { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .dossier header h3 { margin: 4px 0 0; }
+  .dossier .body { padding: 4px 14px 10px; }
+  .dossier dl { margin: 0; }
+  .dossier dt { margin-top: 10px; font-size: 12px; letter-spacing: 0.04em; color: var(--muted); }
+  .dossier dd { margin: 2px 0 0; }
+  .mark { border-top: 3px solid var(--ibd); }
+  .mark.t2d { border-top-color: var(--t2d); }
+  .mark.crc { border-top-color: var(--crc); }
+  .mark.ad { border-top-color: var(--ad); }
+  .mark.pd { border-top-color: var(--pd); }
+  .ref { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--ink); padding: 12px 14px; margin: 0 0 10px; }
+  .ref.ibd { border-left-color: var(--ibd); }
+  .ref.t2d { border-left-color: var(--t2d); }
+  .ref.crc { border-left-color: var(--crc); }
+  .ref.ad { border-left-color: var(--ad); }
+  .ref.pd { border-left-color: var(--pd); }
+  .ref p { margin: 6px 0 0; }
+  .ref a { text-decoration: underline; text-underline-offset: 2px; }
+  .mini { width: 100%; min-width: 0; font-size: 13px; }
+  .mini th, .mini td { padding: 6px 8px; }
+  details { background: var(--paper); border: 1px solid var(--line); padding: 8px 14px; margin-top: 10px; }
+  summary { cursor: pointer; font-weight: 650; }
+  footer {
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.92em; }
+  @media (max-width: 1100px) {
+    .bars { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 800px) {
+    h1 { font-size: 24px; }
+    .bars, .grid2, .trio { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .hero { background: white; color: black; }
+    .lead, .kicker, .pill span { color: #333; }
+    nav.sub { display: none; }
+    body { background: white; }
+    .scroll { overflow: visible; }
+    table { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Metadata summary · 2026-10-05 · 五個疾病分開比較</p>
+    <h1>五個菌相研究要分開建模。能預測的問題各不相同。</h1>
+    <p class="lead">IBD、T2D、CRC 來自資料夾裡的 metadata。AD 是 SRR9671446 所屬的 PRJNA554111。PD 是 PRJDB8639 裡有分組的 360 個糞便。目前都還沒有 taxonomy 或豐度表。下面對齊分組、樣品數與論文，並列出豐度表以 <code>run</code> 接上之後，每一個研究實際能訓練的預測模型。</p>
+    <div class="pills">
+      <div class="pill"><b>736</b><span>可分析定序庫</span></div>
+      <div class="pill"><b>668</b><span>受試者合計</span></div>
+      <div class="pill ibd"><b>77</b><span>IBD · 一人一庫</span></div>
+      <div class="pill t2d"><b>100</b><span>T2D · 一人一庫</span></div>
+      <div class="pill crc"><b>113</b><span>CRC · 45 人</span></div>
+      <div class="pill ad"><b>86</b><span>AD · 一人一庫</span></div>
+      <div class="pill pd"><b>360</b><span>PD · 一人一庫</span></div>
+    </div>
+  </div>
+</header>
+<nav class="sub" aria-label="頁內導覽">
+  <div class="wrap">
+    <a href="#compare">總覽比較</a>
+    <a href="#groups">分組與人數</a>
+    <a href="#stats">基本統計</a>
+    <a href="#fields">有哪些欄位</a>
+    <a href="#models">預測模型</a>
+    <a href="#qc">進模型前的篩選</a>
+    <a href="#refs">參考文獻</a>
+  </div>
+</nav>
+<main>
+<div class="wrap">
+
+<section id="compare">
+  <h2>總覽比較</h2>
+  <p class="deck">五份資料各來自一個 BioProject。<code>ml_label</code> 可直接當監督式學習的 y。平台、檢體種類與臨床問題都不同，豐度表不應上下疊成一個資料集。各篇原始論文見文末。</p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>項目</th>
+          <th>IBD 發炎性腸道疾病</th>
+          <th>T2D 第二型糖尿病</th>
+          <th>CRC 大腸直腸癌</th>
+          <th>AD 阿茲海默症</th>
+          <th>PD 帕金森氏症</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>檔案</th>
+          <td class="ibd"><code>IBD/metadata/ibd_groups.csv</code></td>
+          <td class="t2d"><code>T2D/metadata/t2d_groups.csv</code></td>
+          <td class="crc"><code>CRC/metadata/crc_groups.xlsx</code></td>
+          <td class="ad"><code>AD/metadata/ad_groups.csv</code></td>
+          <td class="pd"><code>PD/metadata/pd_groups.csv</code></td>
+        </tr>
+        <tr>
+          <th>BioProject / Study</th>
+          <td class="ibd">PRJEB86986 / ERP170281</td>
+          <td class="t2d">PRJNA1447078 / SRP688705</td>
+          <td class="crc">PRJNA989099 / SRP446495</td>
+          <td class="ad">PRJNA554111 / SRP214293</td>
+          <td class="pd">PRJDB8639 / DRP006407<br>建模用 DRA009229</td>
+        </tr>
+        <tr>
+          <th>定序庫 / 受試者</th>
+          <td class="ibd"><span class="num">77</span> 庫 / <span class="num">77</span> 人</td>
+          <td class="t2d"><span class="num">100</span> 庫 / <span class="num">100</span> 人</td>
+          <td class="crc"><span class="num">113</span> 庫 / <span class="num">45</span> 人</td>
+          <td class="ad"><span class="num">86</span> 庫 / <span class="num">86</span> 人</td>
+          <td class="pd"><span class="num">360</span> 庫 / <span class="num">360</span> 人<br>BioProject 另有 330 個無分組 run</td>
+        </tr>
+        <tr>
+          <th>一人幾筆</th>
+          <td class="ibd">1</td>
+          <td class="t2d">1</td>
+          <td class="crc">2 或 3。45 人都有腫瘤與鄰近非腫瘤；其中 23 人另有糞便</td>
+          <td class="ad">1。AD1–AD43、CON1–CON43 都齊</td>
+          <td class="pd">1。樣本名唯一</td>
+        </tr>
+        <tr>
+          <th>分組（庫數）</th>
+          <td class="ibd">IBD 57（74.0%）<br>Healthy 20（26.0%）</td>
+          <td class="t2d">聽力受損 43（43%）<br>聽力正常 57（57%）<br>全員都是 T2D</td>
+          <td class="crc">Tumor 45<br>NonTumor 45<br>StoolHealthyLike 23</td>
+          <td class="ad">AD 43（50%）<br>Control 43（50%）</td>
+          <td class="pd">PD 223（61.9%）<br>Control 137（38.1%）</td>
+        </tr>
+        <tr>
+          <th>這份標籤在問什麼</th>
+          <td class="ibd">糞便菌相能否區分 IBD 與健康人</td>
+          <td class="t2d">T2D 患者中，能否區分感音神經性聽力損失與聽力正常</td>
+          <td class="crc">同一批病人的腫瘤組織、鄰近黏膜、糞便有何不同；腫瘤樣本另有期別</td>
+          <td class="ad">糞便菌相能否區分阿茲海默症與認知正常對照</td>
+          <td class="pd">糞便菌相能否區分帕金森氏症與對照。樣本名 P 為病人、C 為對照</td>
+        </tr>
+        <tr>
+          <th>檢體</th>
+          <td class="ibd">stool，77/77</td>
+          <td class="t2d">feces，100/100</td>
+          <td class="crc">腫瘤組織 45、非腫瘤組織 45、糞便 23。部位：右結腸 44、左結腸 39、直腸 27、缺 3</td>
+          <td class="ad">糞便 86/86。BioSample 的 tissue 欄寫成 gut1–gut86，不是解剖部位</td>
+          <td class="pd">糞便。四個採樣地：愛知 146、岩手 96、岡山 64、福岡 54</td>
+        </tr>
+        <tr>
+          <th>平台</th>
+          <td class="ibd">PacBio Sequel IIe<br>AMPLICON · SINGLE</td>
+          <td class="t2d">Illumina MiSeq<br>AMPLICON · PAIRED</td>
+          <td class="crc">Ion Torrent Proton<br>AMPLICON · PAIRED<br>論文：Ion 16S kit、Ion S5</td>
+          <td class="ad">Illumina MiSeq<br>PAIRED · 2×301 bp<br>SRA 登錄為 METAGENOMIC；論文是 16S</td>
+          <td class="pd">Illumina MiSeq<br>AMPLICON · PAIRED · 2×300<br>論文：16S V3–V4，引子 341F / 805R</td>
+        </tr>
+        <tr>
+          <th>性別</th>
+          <td class="ibd">整欄空白</td>
+          <td class="t2d">男 52、女 48</td>
+          <td class="crc">病人層級男 27、女 18<br>樣品層級男 72、女 41</td>
+          <td class="ad">兩組都是女 20、男 23</td>
+          <td class="pd">公開 metadata 沒有性別</td>
+        </tr>
+        <tr>
+          <th>年齡（歲）</th>
+          <td class="ibd">整欄空白</td>
+          <td class="t2d">30–55，平均 42.6，中位數 43，SD 7.5</td>
+          <td class="crc">43–94，平均 73.8，中位數 75，SD 10.4</td>
+          <td class="ad">AD 57–85，平均 70.1，中位數 69<br>Control 55–85，平均 69.7，中位數 71</td>
+          <td class="pd">公開 metadata 沒有年齡。論文有年齡、性別、BMI、便秘與用藥，但沒有進這張表</td>
+        </tr>
+        <tr>
+          <th>其他臨床欄位</th>
+          <td class="ibd">無</td>
+          <td class="t2d">phenotype、disease_annotation 有值。disease_stage 整欄空白</td>
+          <td class="crc">BMI 三級、腫瘤期別（只在 45 個腫瘤列）、sample_origin</td>
+          <td class="ad">醫院：對照 43 人全是大坪醫院；AD 有 35 人大坪、8 人來自另外三家重慶醫院。沒有 MMSE、CDR、APOE</td>
+          <td class="pd">採樣地不平衡。福岡是 PD 49、對照 5。沒有 Hoehn–Yahr 分期</td>
+        </tr>
+        <tr>
+          <th>spots 中位數（最小–最大）</th>
+          <td class="ibd"><span class="num">17,721</span><br>（28 – 29,582）</td>
+          <td class="t2d"><span class="num">89,524</span><br>（52,334 – 151,130）</td>
+          <td class="crc"><span class="num">360,075</span><br>（53,435 – 704,216）</td>
+          <td class="ad"><span class="num">38,090</span><br>（30,040 – 44,971）</td>
+          <td class="pd"><span class="num">110,000</span><br>（21,863 – 163,561）</td>
+        </tr>
+        <tr>
+          <th>檔案大小中位數</th>
+          <td class="ibd"><span class="num">12 MB</span>（0–21，0 是整數四捨五入）</td>
+          <td class="t2d"><span class="num">13 MB</span>（6–22）</td>
+          <td class="crc"><span class="num">61 MB</span>（9–117）</td>
+          <td class="ad"><span class="num">8.3 MB</span>（5.9–10.2）</td>
+          <td class="pd"><span class="num">34.3 MB</span>（6.9–67.6）</td>
+        </tr>
+        <tr>
+          <th>樣本是否獨立</th>
+          <td class="ibd">獨立。分層交叉驗證即可</td>
+          <td class="t2d">獨立。分層交叉驗證即可</td>
+          <td class="crc">不獨立。同一 <code>host_subject_id</code> 必須整組留在訓練或測試</td>
+          <td class="ad">獨立。分層交叉驗證即可。醫院與疾病不完全獨立，要放進基準模型</td>
+          <td class="pd">獨立。分層交叉驗證，並把採樣地放進基準模型</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="deck" style="margin-top:10px">spots 是各平台自己的讀數數。Sequel 單端、三份 MiSeq 雙端與 Ion Torrent 的讀長和錯誤型態不同。同樣是 MiSeq，spots 中位數大約是 PD 11 萬、T2D 9 萬、AD 3.8 萬，不能拿來比「誰的菌相訊號比較強」。</p>
+</section>
+
+<section id="groups">
+  <h2>分組情形與樣品數目</h2>
+  <div class="bars">
+    <article class="barcard">
+      <h3><span class="tag ibd">IBD</span> 77 個獨立糞便</h3>
+      <div class="stack" role="img" aria-label="IBD 57 人，健康 20 人">
+        <span style="width:74.0%; background:#1b6b66"></span>
+        <span style="width:26.0%; background:#b7ccc9"></span>
+      </div>
+      <ul class="legend">
+        <li><span><i class="sw" style="background:#1b6b66"></i>IBD</span><span class="num">57</span></li>
+        <li><span><i class="sw" style="background:#b7ccc9"></i>Healthy</span><span class="num">20</span></li>
+      </ul>
+      <p class="deck" style="margin:8px 0 0">約 2.85 : 1。健康組只有 20 人，而且低深度庫集中在這一組。</p>
+    </article>
+    <article class="barcard">
+      <h3><span class="tag t2d">T2D</span> 100 個獨立糞便</h3>
+      <div class="stack" role="img" aria-label="聽力受損 43 人，聽力正常 57 人">
+        <span style="width:43%; background:#9a5528"></span>
+        <span style="width:57%; background:#e4c2ae"></span>
+      </div>
+      <ul class="legend">
+        <li><span><i class="sw" style="background:#9a5528"></i>T2D_hearing_loss</span><span class="num">43</span></li>
+        <li><span><i class="sw" style="background:#e4c2ae"></i>T2D_normal_hearing</span><span class="num">57</span></li>
+      </ul>
+      <p class="deck" style="margin:8px 0 0">沒有非糖尿病對照。phenotype 與 disease_annotation 和這個分組一一對應。</p>
+    </article>
+    <article class="barcard">
+      <h3><span class="tag crc">CRC</span> 45 人、113 庫</h3>
+      <div class="stack" role="img" aria-label="腫瘤 45、非腫瘤 45、糞便 23">
+        <span style="width:39.8%; background:#2c4c78"></span>
+        <span style="width:39.8%; background:#8ea2c2"></span>
+        <span style="width:20.4%; background:#d5deea"></span>
+      </div>
+      <ul class="legend">
+        <li><span><i class="sw" style="background:#2c4c78"></i>Tumor</span><span class="num">45</span></li>
+        <li><span><i class="sw" style="background:#8ea2c2"></i>NonTumor</span><span class="num">45</span></li>
+        <li><span><i class="sw" style="background:#d5deea"></i>StoolHealthyLike</span><span class="num">23</span></li>
+      </ul>
+      <p class="deck" style="margin:8px 0 0">23 人三種都有，22 人只有腫瘤加非腫瘤。沒有獨立的健康受試者。</p>
+    </article>
+    <article class="barcard">
+      <h3><span class="tag ad">AD</span> 86 個獨立糞便</h3>
+      <div class="stack" role="img" aria-label="阿茲海默症 43 人，對照 43 人">
+        <span style="width:50%; background:#5c3d6e"></span>
+        <span style="width:50%; background:#d9c9e2"></span>
+      </div>
+      <ul class="legend">
+        <li><span><i class="sw" style="background:#5c3d6e"></i>AD</span><span class="num">43</span></li>
+        <li><span><i class="sw" style="background:#d9c9e2"></i>Control</span><span class="num">43</span></li>
+      </ul>
+      <p class="deck" style="margin:8px 0 0">1 : 1，年齡與性別都配平。SRR9671446 是 Control 的 CON17。</p>
+    </article>
+    <article class="barcard">
+      <h3><span class="tag pd">PD</span> 360 個獨立糞便</h3>
+      <div class="stack" role="img" aria-label="帕金森氏症 223 人，對照 137 人">
+        <span style="width:61.9%; background:#3f5c38"></span>
+        <span style="width:38.1%; background:#c9d7c4"></span>
+      </div>
+      <ul class="legend">
+        <li><span><i class="sw" style="background:#3f5c38"></i>PD</span><span class="num">223</span></li>
+        <li><span><i class="sw" style="background:#c9d7c4"></i>Control</span><span class="num">137</span></li>
+      </ul>
+      <p class="deck" style="margin:8px 0 0">約 1.63 : 1。福岡只有 5 名對照、49 名 PD。</p>
+    </article>
+  </div>
+
+  <div class="trio" style="margin-top:14px">
+    <article class="dossier mark">
+      <header><span class="tag ibd">IBD</span><h3>二元、不平衡、缺協變量</h3></header>
+      <div class="body">
+        <dl>
+          <dt>受試者</dt>
+          <dd>run、biosample、host_subject_id 都是 77 個唯一值。</dd>
+          <dt>標籤</dt>
+          <dd><code>ml_label</code> = IBD 或 Healthy。</dd>
+          <dt>資料品質</dt>
+          <dd><code>host_subject_id</code> 在 CSV 裡重複出現一次，兩欄內容相同。</dd>
+        </dl>
+      </div>
+    </article>
+    <article class="dossier mark t2d">
+      <header><span class="tag t2d">T2D</span><h3>二元、大致平衡、協變量齊</h3></header>
+      <div class="body">
+        <dl>
+          <dt>受試者</dt>
+          <dd>100 個 run 對 100 人，T2DM_001 到 T2DM_100。</dd>
+          <dt>性別 × 分組</dt>
+          <dd>聽力受損：女 20、男 23（女性 46.5%）。聽力正常：女 28、男 29（女性 49.1%）。</dd>
+          <dt>年齡 × 分組</dt>
+          <dd>兩組中位數都是 43 歲。聽力受損平均 42.8，聽力正常平均 42.4。</dd>
+        </dl>
+      </div>
+    </article>
+    <article class="dossier mark crc">
+      <header><span class="tag crc">CRC</span><h3>配對檢體，外加期別與 BMI</h3></header>
+      <div class="body">
+        <dl>
+          <dt>病人內配對</dt>
+          <dd>年齡、性別、BMI、部位在同一人的各列都相同。期別只寫在腫瘤列。</dd>
+          <dt>腫瘤期別（45 人）</dt>
+          <dd>I 期 7、II 期 19、III 期 16、IV 期 3。早（I–II）26 人，晚（III–IV）19 人。</dd>
+          <dt>病人 BMI</dt>
+          <dd>正常 15、肥胖 17、過重 13。</dd>
+          <dt>部位（病人）</dt>
+          <dd>右結腸 16、左結腸 16、直腸 12。CC2 的三個樣本都沒有部位。</dd>
+        </dl>
+      </div>
+    </article>
+    <article class="dossier mark ad">
+      <header><span class="tag ad">AD</span><h3>二元、人數配平、要校正醫院</h3></header>
+      <div class="body">
+        <dl>
+          <dt>受試者</dt>
+          <dd>86 個 run 對 86 人。查詢起點 SRR9671446 = CON17，男，82 歲，大坪醫院，42,847 spots。</dd>
+          <dt>年齡 × 性別</dt>
+          <dd>AD 平均 70.1 歲（女 20、男 23），Control 平均 69.7 歲（女 20、男 23）。</dd>
+          <dt>醫院</dt>
+          <dd>Control 43 人全來自大坪醫院。AD 有 35 人大坪，其餘 8 人來自重醫附一（6）、西南醫院（1）、重慶市人民醫院（1）。</dd>
+          <dt>深度</dt>
+          <dd>spots 30,040–44,971，中位數 38,090。沒有空庫。每個 spot 都是 602 bp。</dd>
+        </dl>
+      </div>
+    </article>
+    <article class="dossier mark pd">
+      <header><span class="tag pd">PD</span><h3>人數最多，採樣地要校正</h3></header>
+      <div class="body">
+        <dl>
+          <dt>分組怎麼來</dt>
+          <dd>樣本名裡的 P 是帕金森氏症、C 是對照。字首 I、F、O 分別是岩手、福岡、岡山；沒有字首的是愛知。</dd>
+          <dt>各地人數</dt>
+          <dd>愛知：對照 60、PD 86。岩手：44、52。岡山：28、36。福岡：5、49。</dd>
+          <dt>沒進表的 run</dt>
+          <dd>DRA008768 有 330 個 run，2026-04-11 公開，沒有樣本名、國家或分組；其中 171 個 spots 為 0。不放進 <code>pd_groups.csv</code>。</dd>
+          <dt>深度</dt>
+          <dd>中位數 110,000 spots，兩組中位數幾乎相同（PD 109,940、對照 110,060）。低於 30,000 的有 5 庫，最低 21,863。</dd>
+        </dl>
+      </div>
+    </article>
+  </div>
+
+  <div class="callout">
+    <strong>PD 的福岡幾乎沒有對照，AD 的非大坪醫院樣本全部是病人。</strong>
+    福岡是 49 名 PD 對 5 名對照。AD 有 8 個樣本來自大坪以外的醫院，而且全部是 AD。若模型只學到採樣地，交叉驗證仍可能好看。PD 的基準要包含四個縣，AD 的基準要包含「是否大坪醫院」。
+  </div>
+
+  <div class="callout" style="margin-top:14px">
+    <strong>CRC 的 23 個糞便不是隨機子集。</strong>
+    這 23 人包含全部 13 位過重病人；只有組織、沒有糞便的 22 人是正常體重 11 人與肥胖 11 人，過重為 0。糞便組男性 18/23（78%），只有組織的 22 人女性 13/22。糞便組年齡中位數 73 歲（平均 71.8），只有組織者中位數 77 歲（平均 76.9）。用糞便建模時，這個選擇差會進到特徵裡。
+  </div>
+</section>
+
+<section id="stats">
+  <h2>基本統計</h2>
+  <p class="deck">年齡與性別能當協變量的有 T2D、CRC 與 AD。IBD 與 PD 的公開表沒有這兩欄；PD 論文裡有，但沒有寫進 ENA。定序深度在 IBD 的健康組特別不穩；CRC 的糞便庫深於組織庫；PD 的 360 庫中位數約 11 萬 reads。</p>
+  <div class="trio">
+    <article class="card">
+      <h3><span class="tag ibd">IBD</span> 深度</h3>
+      <table class="mini">
+        <thead><tr><th></th><th>Healthy 20</th><th>IBD 57</th></tr></thead>
+        <tbody>
+          <tr><td>spots 平均</td><td class="num">14,294</td><td class="num">17,025</td></tr>
+          <tr><td>spots 中位數</td><td class="num">17,193</td><td class="num">18,038</td></tr>
+          <tr><td>spots 最小</td><td class="num">28</td><td class="num">87</td></tr>
+          <tr><td>整體平均 / SD</td><td colspan="2" class="num">16,316 / 7,396</td></tr>
+          <tr><td>size_MB 平均</td><td colspan="2" class="num">11.3（中位數 12）</td></tr>
+        </tbody>
+      </table>
+      <p class="deck">spots &lt; 1,000 有 5 庫：健康 3、IBD 2。spots &lt; 5,000 有 10 庫：健康 5、IBD 5。健康組有四分之一低於 5,000 reads。</p>
+    </article>
+    <article class="card">
+      <h3><span class="tag t2d">T2D</span> 深度與年齡</h3>
+      <table class="mini">
+        <thead><tr><th></th><th>聽力受損 43</th><th>聽力正常 57</th></tr></thead>
+        <tbody>
+          <tr><td>年齡平均</td><td class="num">42.8</td><td class="num">42.4</td></tr>
+          <tr><td>年齡中位數</td><td class="num">43</td><td class="num">43</td></tr>
+          <tr><td>spots 平均</td><td class="num">96,238</td><td class="num">96,568</td></tr>
+          <tr><td>spots 中位數</td><td class="num">99,422</td><td class="num">85,398</td></tr>
+          <tr><td>整體 spots</td><td colspan="2" class="num">平均 96,426，SD 25,615</td></tr>
+        </tbody>
+      </table>
+      <p class="deck">平均深度接近，中位數仍差約 1.4 萬。模型裡保留 log(spots)。最低 52,334，沒有像 IBD 那種近乎空庫。</p>
+    </article>
+    <article class="card">
+      <h3><span class="tag crc">CRC</span> 深度隨檢體變</h3>
+      <table class="mini">
+        <thead><tr><th></th><th>中位數 spots</th><th>平均 spots</th></tr></thead>
+        <tbody>
+          <tr><td>Tumor</td><td class="num">325,883</td><td class="num">323,049</td></tr>
+          <tr><td>NonTumor</td><td class="num">368,495</td><td class="num">366,605</td></tr>
+          <tr><td>Stool</td><td class="num">459,339</td><td class="num">431,191</td></tr>
+          <tr><td>全部 113</td><td class="num">360,075</td><td class="num">362,406</td></tr>
+        </tbody>
+      </table>
+      <p class="deck">SD 122,004。低於 100,000 spots 的有 5 庫（3 個非腫瘤、2 個腫瘤），最低是 CC13-N 的 53,435。組織與糞便要分開看深度。</p>
+    </article>
+    <article class="card">
+      <h3><span class="tag ad">AD</span> 深度與年齡</h3>
+      <table class="mini">
+        <thead><tr><th></th><th>AD 43</th><th>Control 43</th></tr></thead>
+        <tbody>
+          <tr><td>年齡平均</td><td class="num">70.1</td><td class="num">69.7</td></tr>
+          <tr><td>年齡中位數</td><td class="num">69</td><td class="num">71</td></tr>
+          <tr><td>年齡範圍</td><td class="num">57–85</td><td class="num">55–85</td></tr>
+          <tr><td>spots 平均</td><td class="num">37,428</td><td class="num">38,422</td></tr>
+          <tr><td>spots 中位數</td><td class="num">36,987</td><td class="num">38,145</td></tr>
+          <tr><td>整體 spots</td><td colspan="2" class="num">中位數 38,090，最小 30,040</td></tr>
+        </tbody>
+      </table>
+      <p class="deck">兩組深度接近。檔案大小中位數 AD 8.22 MB、Control 8.35 MB。SRA 的 library_source 寫 METAGENOMIC，論文方法是 16S。</p>
+    </article>
+    <article class="card">
+      <h3><span class="tag pd">PD</span> 深度與採樣地</h3>
+      <table class="mini">
+        <thead><tr><th>採樣地</th><th>Control</th><th>PD</th></tr></thead>
+        <tbody>
+          <tr><td>愛知 Aichi</td><td class="num">60</td><td class="num">86</td></tr>
+          <tr><td>岩手 Iwate</td><td class="num">44</td><td class="num">52</td></tr>
+          <tr><td>岡山 Okayama</td><td class="num">28</td><td class="num">36</td></tr>
+          <tr><td>福岡 Fukuoka</td><td class="num">5</td><td class="num">49</td></tr>
+          <tr><td>spots 中位數</td><td class="num">110,060</td><td class="num">109,940</td></tr>
+          <tr><td>spots 範圍</td><td colspan="2" class="num">21,863 – 163,561，整體中位數 110,000</td></tr>
+        </tbody>
+      </table>
+      <p class="deck">採樣日期 2016-11-11 到 2019-05-15，3 筆缺日期。每個 spot 約 602 bp，對應 MiSeq 2×300 的 V3–V4。</p>
+    </article>
+  </div>
+  <h3>CRC 腫瘤期別（只計 45 個腫瘤，一人一期）</h3>
+  <div class="barcard" style="max-width:640px">
+    <div class="stack" role="img" aria-label="I 期 7、II 期 19、III 期 16、IV 期 3">
+      <span style="width:15.6%; background:#d5deea"></span>
+      <span style="width:42.2%; background:#8ea2c2"></span>
+      <span style="width:35.6%; background:#2c4c78"></span>
+      <span style="width:6.7%; background:#1a2c48"></span>
+    </div>
+    <ul class="legend">
+      <li><span>I 期</span><span class="num">7（15.6%）</span></li>
+      <li><span>II 期</span><span class="num">19（42.2%）</span></li>
+      <li><span>III 期</span><span class="num">16（35.6%）</span></li>
+      <li><span>IV 期</span><span class="num">3（6.7%）</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="fields">
+  <h2>metadata 裡有哪些資訊</h2>
+  <p class="deck">接豐度表時用 <code>run</code>（IBD 是 ENA ERR，其餘是 SRA SRR）。<code>ml_label</code> 當 y。<code>host_subject_id</code> 在 CRC 用來把同一人綁在一起。</p>
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>欄位</th><th>用途</th><th>IBD</th><th>T2D</th><th>CRC</th><th>AD</th><th>PD</th></tr>
+      </thead>
+      <tbody>
+        <tr><th>run, biosample, sample_name</th><td>樣本鍵、對豐度表</td><td class="ibd">完整，各 77 唯一</td><td class="t2d">完整，各 100 唯一</td><td class="crc">完整，各 113 唯一</td><td class="ad">完整，各 86 唯一</td><td class="pd">360 個有名稱的 run 唯一</td></tr>
+        <tr><th>host_subject_id</th><td>人的 ID、交叉驗證分組</td><td class="ibd">完整；CSV 重複一欄</td><td class="t2d">完整，一人一值</td><td class="crc">45 個 ID</td><td class="ad">與 sample_name 相同，一人一值</td><td class="pd">用樣本名，360 個唯一</td></tr>
+        <tr><th>group, ml_label</th><td>預測標籤</td><td class="ibd">IBD / Healthy</td><td class="t2d">聽力受損 / 聽力正常</td><td class="crc">Tumor / NonTumor / StoolHealthyLike</td><td class="ad">AD / Control</td><td class="pd">PD / Control，由樣本名的 P 與 C 解析</td></tr>
+        <tr><th>sex, age</th><td>協變量或基準模型</td><td class="ibd">皆空白</td><td class="t2d">完整</td><td class="crc">完整，且同一人各列相同</td><td class="ad">完整。年齡在 BioSample，不在 ENA 主表</td><td class="pd">ENA 沒有。論文有，但未進公開樣本表</td></tr>
+        <tr><th>tissue</th><td>檢體或解剖部位</td><td class="ibd">全部 stool</td><td class="t2d">全部 feces</td><td class="crc">右結腸、左結腸、直腸；CC2 三庫空白</td><td class="ad">糞便。原始欄是 gut 加編號</td><td class="pd">全部 feces</td></tr>
+        <tr><th>sample_origin</th><td>組織還是糞便</td><td class="ibd">無此欄</td><td class="t2d">無此欄</td><td class="crc">Tumoral / Non Tumoral / Feces，與 group 一一對應</td><td class="ad">無此欄</td><td class="pd">無此欄</td></tr>
+        <tr><th>bmi_class</th><td>協變量</td><td class="ibd">無</td><td class="t2d">無</td><td class="crc">Normal / Overweight / Obese</td><td class="ad">無</td><td class="pd">無</td></tr>
+        <tr><th>stage</th><td>期別預測</td><td class="ibd">無</td><td class="t2d">disease_stage 欄存在但全空</td><td class="crc">只在腫瘤列：I–IV</td><td class="ad">無</td><td class="pd">無 Hoehn–Yahr</td></tr>
+        <tr><th>醫院或表型</th><td>混淆或標籤核對</td><td class="ibd">無 CD/UC 亞型</td><td class="t2d">phenotype 與 group 一致</td><td class="crc">無醫院欄</td><td class="ad">hospital。8 個非大坪樣本都是 AD</td><td class="pd">site：愛知、岩手、岡山、福岡。福岡嚴重不平衡</td></tr>
+        <tr><th>library_strategy, layout, instrument</th><td>批次 / 平台</td><td class="ibd">AMPLICON, SINGLE, Sequel IIe</td><td class="t2d">AMPLICON, PAIRED, MiSeq</td><td class="crc">AMPLICON, PAIRED, Ion Proton</td><td class="ad">SRA：OTHER / METAGENOMIC / MiSeq。論文：16S</td><td class="pd">AMPLICON, PAIRED, MiSeq。論文：16S V3–V4</td></tr>
+        <tr><th>spots, size_MB</th><td>文庫量、QC、協變量</td><td class="ibd">有；尾端很長</td><td class="t2d">有</td><td class="crc">有</td><td class="ad">有，深度很齊</td><td class="pd">有。中位數 11 萬，最低仍超過 2 萬</td></tr>
+        <tr><th>bioproject, study, disease</th><td>研究識別</td><td class="ibd">單一研究</td><td class="t2d">單一研究</td><td class="crc">單一研究</td><td class="ad">單一研究</td><td class="pd">單一研究，但有兩個 DRA 提交</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="deck" style="margin-top:10px">公開 metadata 都沒有用藥、HbA1c、MMSE 或連續 BMI。IBD 論文有 CD 與 UC，這份 CSV 只留 IBD / Healthy。T2D 論文有 TNF-α、IL-6、LBP。PD 論文有年齡、性別、BMI、便秘與用藥，ENA 樣本表沒有這些欄。引子區間以各篇方法為準，見參考文獻。</p>
+</section>
+
+<section id="models">
+  <h2>豐度表到手之後可以做的預測</h2>
+  <div class="good">
+    <strong>PD 的人數最多，AD 與 T2D 的協變量最齊。</strong>
+    PD 是 223 對 137 的獨立糞便、16S V3–V4，但公開表沒有年齡與性別，而且福岡只有 5 名對照，基準模型一定要放採樣地。AD 是 43 對 43、年齡與性別配平，再加「是否大坪醫院」。T2D 是 100 人、聽力受損 43 對 57。三邊都用 genus CLR 的 elastic-net。菌相模型的 AUROC 與 AUPRC 要高於「只用協變量」和「只用 Shannon、豐富度」。
+  </div>
+  <p class="deck">樣本數是 77、100、86、360、45 這個量級，特徵數通常大於樣本數。適合係數可解釋、有正則化的模型。神經網路在這個 n 上會記住訓練集。</p>
+
+  <div class="scroll">
+    <table class="tasks">
+      <thead>
+        <tr>
+          <th>研究</th>
+          <th>預測問題</th>
+          <th>y 怎麼取</th>
+          <th>可用 n</th>
+          <th>驗證方式</th>
+          <th>模型</th>
+          <th>判斷</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PD</td>
+          <td>帕金森氏症 vs 對照</td>
+          <td>PD vs Control</td>
+          <td>360 人，223 對 137</td>
+          <td>依疾病分層的重複 5-fold，採樣地當協變量</td>
+          <td>Elastic-net（採樣地、log spots）。沒有年齡與性別可放</td>
+          <td><span class="judge go">優先做</span></td>
+        </tr>
+        <tr>
+          <td>AD</td>
+          <td>阿茲海默症 vs 認知正常</td>
+          <td>AD vs Control</td>
+          <td>86 人，43 對 43</td>
+          <td>重複分層 5-fold</td>
+          <td>Elastic-net（年齡、性別、log spots、是否大坪醫院）</td>
+          <td><span class="judge go">優先做</span></td>
+        </tr>
+        <tr>
+          <td>T2D</td>
+          <td>T2D 患者是否合併聽力損失</td>
+          <td>T2D_hearing_loss vs T2D_normal_hearing</td>
+          <td>100 人</td>
+          <td>重複分層 5-fold</td>
+          <td>Elastic-net（含年齡、性別、log spots）；Random forest 作對照</td>
+          <td><span class="judge go">優先做</span></td>
+        </tr>
+        <tr>
+          <td>IBD</td>
+          <td>糞便菌相區分 IBD 與健康</td>
+          <td>IBD vs Healthy</td>
+          <td>77 人；先檢視 spots &lt; 1,000 的 5 庫</td>
+          <td>重複分層 5-fold。健康組每折大約 4 人，區間會寬</td>
+          <td>class_weight 平衡的 elastic-net。必須同時報告「只使用 log(spots)」的基準</td>
+          <td><span class="judge mid">可做，先處理深度</span></td>
+        </tr>
+        <tr>
+          <td>CRC</td>
+          <td>腫瘤黏膜 vs 鄰近非腫瘤黏膜</td>
+          <td>Tumor vs NonTumor，不含糞便</td>
+          <td>45 對，90 庫</td>
+          <td>依 host_subject_id 的 GroupKFold。同一人的兩塊組織不可拆開</td>
+          <td>病人內豐度差（paired）為主；分類模型當補充</td>
+          <td><span class="judge mid">可做，解釋成組織差異</span></td>
+        </tr>
+        <tr>
+          <td>CRC</td>
+          <td>腫瘤早晚期</td>
+          <td>I–II vs III–IV，只用腫瘤列</td>
+          <td>26 vs 19，一人一筆</td>
+          <td>重複分層 5-fold</td>
+          <td>Elastic-net，協變量含性別、年齡、部位、BMI、log spots</td>
+          <td><span class="judge mid">探索用，IV 期只有 3 人</span></td>
+        </tr>
+        <tr>
+          <td>CRC</td>
+          <td>四期分類 I / II / III / IV</td>
+          <td>stage</td>
+          <td>7 / 19 / 16 / 3</td>
+          <td>—</td>
+          <td>樣本撐不住四類，尤其 IV 期</td>
+          <td><span class="judge stop">改做早晚期</span></td>
+        </tr>
+        <tr>
+          <td>CRC</td>
+          <td>糞便篩檢：大腸癌 vs 健康人</td>
+          <td>檔案中沒有獨立健康糞便</td>
+          <td>23 個糞便全部來自已有腫瘤的病人</td>
+          <td>—</td>
+          <td>StoolHealthyLike 是這 23 個糞便列的組名，sample_origin 為 Feces</td>
+          <td><span class="judge stop">這份 metadata 沒有這個標籤</span></td>
+        </tr>
+        <tr>
+          <td>CRC</td>
+          <td>BMI 三級，或左/右結腸/直腸</td>
+          <td>bmi_class 或 tissue</td>
+          <td>45 人（取一種檢體，避免一人多列）</td>
+          <td>一人一列的分層 CV</td>
+          <td>拿來檢查菌相是不是主要在學 BMI 或部位，而不是期別</td>
+          <td><span class="judge mid">當混淆檢查</span></td>
+        </tr>
+        <tr>
+          <td>五研究合併</td>
+          <td>一個模型分辨 IBD、T2D、CRC、AD、PD</td>
+          <td>疾病名稱</td>
+          <td>736 庫</td>
+          <td>平台、引子與疾病綁在一起</td>
+          <td>模型會學到 Sequel、MiSeq、Ion 與糞便/組織的差異</td>
+          <td><span class="judge stop">不要訓練</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <article class="card">
+      <h3>共同流程（每一個研究各做一次）</h3>
+      <ol class="steps">
+        <li>用 <code>run</code> 把 count 表接到 metadata。保留 count，自己做過濾與轉換；若只有相對豐度，就不要再稀釋一次。</li>
+        <li>去掉明顯失敗的文庫後，以盛行率過濾 taxon（例如至少 10% 樣本出現）。這個門檻只用訓練折的樣本來算。</li>
+        <li>主矩陣用 genus 的 CLR（加一個小偽計數）。另外做一版相對豐度、一版有無（presence/absence），看交叉驗證哪一版穩。</li>
+        <li>先畫 PCoA 或 Aitchison 距離，並用 PERMANOVA 看 group、性別、年齡、部位、log(spots)。深度若能分開兩組，分類分數要對著深度基準來讀。</li>
+        <li>Elastic-net logistic 當主模型。Random forest 或淺層 gradient boosting 當對照。sPLS-DA 適合做出可報告的菌屬面板。係數與 SHAP 用來解釋，不用來取代留出集的 AUROC。</li>
+        <li>指標用 AUROC、AUPRC、balanced accuracy，並做標籤置換。IBD 不要只報 accuracy，因為永遠猜 IBD 就有 74%。</li>
+        <li>差異豐度（ALDEx2、ANCOM-BC 或 MaAsLin2）用來核對分類器挑中的菌是不是同一批。那是關聯，不是預測成績。</li>
+        <li>每個研究只有一個 BioProject，沒有外部驗證集。內部交叉驗證會偏樂觀，報告時寫成內部估計。</li>
+      </ol>
+    </article>
+    <article class="card">
+      <h3>模型怎麼選</h3>
+      <table class="mini">
+        <thead><tr><th>做法</th><th>在這五份資料的角色</th></tr></thead>
+        <tbody>
+          <tr><td>Elastic-net logistic</td><td>預設主模型。n 小、p 大、需要一組可解釋菌屬。</td></tr>
+          <tr><td>只用協變量的 logistic</td><td>基準。菌相模型要贏過它。</td></tr>
+          <tr><td>Shannon + 豐富度</td><td>第二基準。若打平，訊號是整體多樣性。</td></tr>
+          <tr><td>Random forest</td><td>看非線性。重要性在組成型資料上較不穩。</td></tr>
+          <tr><td>sPLS-DA</td><td>菌相研究常用的低維面板，適合跟 elastic-net 對照。</td></tr>
+          <tr><td>Gradient boosting</td><td>樹要很淺，且用巢狀 CV 調參，否則 n=77–100 容易過擬合。</td></tr>
+          <tr><td>神經網路、深度學習</td><td>這五份的樣本數不夠。</td></tr>
+          <tr><td>未分組的隨機切分（CRC）</td><td>同一人的腫瘤與鄰近組織會漏到測試集，分數會虛高。</td></tr>
+        </tbody>
+      </table>
+      <h3>各研究再加的協變量</h3>
+      <ul>
+        <li><strong>PD：</strong>採樣地、log(spots)。公開表沒有年齡、性別、BMI 或用藥。</li>
+        <li><strong>AD：</strong>年齡、性別、log(spots)、是否大坪醫院。沒有認知分數可預測。</li>
+        <li><strong>T2D：</strong>年齡、性別、log(spots)。論文裡的細胞激素不在 metadata。</li>
+        <li><strong>IBD：</strong>沒有年齡與性別，也沒有 CD/UC。至少放入 log(spots)，並分別報告含與不含那 5 個 spots &lt; 1,000 文庫的成績。</li>
+        <li><strong>CRC 組織：</strong>性別、年齡、部位、BMI、log(spots)，以及依病人分組。期別模型只用 45 列腫瘤。</li>
+        <li><strong>CRC 糞便：</strong>可描述這 23 人的糞便群落、或和同一人的黏膜比較。它回答不了「健康人 vs 大腸癌」。</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<section id="qc">
+  <h2>進模型前建議先看的文庫</h2>
+  <p class="deck">Sequel 的 spots 不能用 Illumina 的深度門檻硬套。下面 5 個 IBD 文庫低到接近空庫，建議做「納入 / 排除」兩套成績。1,000 到 5,000 的 PacBio 擴增子是否保留，等讀長與稀釋曲線再定。</p>
+  <details open>
+    <summary>IBD：spots 低於 5,000 的 10 庫</summary>
+    <table class="mini">
+      <thead><tr><th>sample_name</th><th>run 列所在分組</th><th>spots</th><th>size_MB</th></tr></thead>
+      <tbody>
+        <tr><td>F148</td><td>Healthy</td><td class="num">28</td><td class="num">0</td></tr>
+        <tr><td>F006</td><td>IBD</td><td class="num">87</td><td class="num">0</td></tr>
+        <tr><td>F104</td><td>IBD</td><td class="num">90</td><td class="num">0</td></tr>
+        <tr><td>F161</td><td>Healthy</td><td class="num">155</td><td class="num">0</td></tr>
+        <tr><td>F147</td><td>Healthy</td><td class="num">615</td><td class="num">0</td></tr>
+        <tr><td>F003</td><td>IBD</td><td class="num">1,158</td><td class="num">0</td></tr>
+        <tr><td>F155</td><td>Healthy</td><td class="num">1,169</td><td class="num">0</td></tr>
+        <tr><td>F159</td><td>Healthy</td><td class="num">2,599</td><td class="num">1</td></tr>
+        <tr><td>F010</td><td>IBD</td><td class="num">3,476</td><td class="num">2</td></tr>
+        <tr><td>F020</td><td>IBD</td><td class="num">4,640</td><td class="num">3</td></tr>
+      </tbody>
+    </table>
+    <p class="deck">size_MB 為 0 的共 7 庫，是整數進位，spots 最高到 1,169。排除 spots &lt; 5,000 之後，健康組從 20 人變 15 人，IBD 從 57 人變 52 人。</p>
+  </details>
+  <details>
+    <summary>CRC：spots 低於 100,000 的 5 庫</summary>
+    <table class="mini">
+      <thead><tr><th>sample_name</th><th>group</th><th>病人</th><th>spots</th><th>size_MB</th></tr></thead>
+      <tbody>
+        <tr><td>CRC_IdISSC2023_CC13-N</td><td>NonTumor</td><td>CC13</td><td class="num">53,435</td><td class="num">9</td></tr>
+        <tr><td>CRC_IdISSC2023_CC4-T</td><td>Tumor</td><td>CC4</td><td class="num">70,463</td><td class="num">14</td></tr>
+        <tr><td>CRC_IdISSC2023_CC1-N</td><td>NonTumor</td><td>CC1</td><td class="num">75,820</td><td class="num">14</td></tr>
+        <tr><td>CRC_IdISSC2023_CC18-T</td><td>Tumor</td><td>CC18</td><td class="num">80,777</td><td class="num">14</td></tr>
+        <tr><td>CRC_IdISSC2023_416-N-R</td><td>NonTumor</td><td>416</td><td class="num">83,344</td><td class="num">15</td></tr>
+      </tbody>
+    </table>
+  </details>
+  <details>
+    <summary>T2D：沒有需要先剔除的空庫</summary>
+    <p>100 庫 spots 都在 52,334 以上，性別與年齡無缺值。disease_stage 全空，不要把空白期別編碼成一個類別。</p>
+  </details>
+  <details>
+    <summary>AD：沒有需要先剔除的空庫</summary>
+    <p>86 庫 spots 都在 30,040 以上。性別與年齡無缺值。地理、採樣日期、宿主在 BioSample 裡都是 missing。建模時保留醫院欄，不要把 8 個非大坪樣本直接刪掉，否則 AD 組會少 8 人且失去校正醫院的機會。</p>
+  </details>
+  <details>
+    <summary>PD：用 360 筆有分組的庫；另外 330 筆先不要用</summary>
+    <p>DRA009229 的 360 庫 spots 都在 21,863 以上，低於 30,000 的有 5 庫（C057AG、F-P027AG、F-C030AG、O-P039AG、O-P009AG）。DRA008768 的 330 庫沒有樣本名與疾病分組，其中 171 庫 spots 為 0，不放進建模表。iRBD 的定序在另一個登錄號 DRA009322，不在 PRJDB8639。</p>
+  </details>
+
+  <h3>實作時對齊的矩陣</h3>
+  <div class="card">
+    <p>每一列是一個 <code>run</code>，對 CRC 的期別模型改成每一列是一個 <code>host_subject_id</code>。特徵是 genus CLR。y 用該研究的 <code>ml_label</code>。CRC 組織比較若要做分類，分組變數用 <code>host_subject_id</code>。五個研究的特徵空間分開擬合，係數不要跨研究比較大小。</p>
+  </div>
+</section>
+
+<section id="refs">
+  <h2>參考文獻</h2>
+  <p class="deck">每份定序資料對應一篇原始論文。連結是 DOI。論文裡有、metadata 沒有的臨床變數，不能當成這次訓練表裡的欄位。</p>
+
+  <article class="ref ibd">
+    <span class="tag ibd">IBD · PRJEB86986</span>
+    <p>Radhakrishnan ST, Mullish BH, Olbei ML, Danckert NP, Valdivia-Garcia MA, Serrano-Contreras JI, et al. Deciphering the microbiome–metabolome landscape of an inflammatory bowel disease inception cohort. <em>Gut Microbes</em>. 2025;17(1):2527863.</p>
+    <p>DOI <a href="https://doi.org/10.1080/19490976.2025.2527863">10.1080/19490976.2025.2527863</a> · PMID 40679059。糞便 16S，並有血清、尿液與糞便代謝體。論文比較了 Crohn’s disease 與 ulcerative colitis；這份 CSV 只保留 IBD / Healthy，沒有亞型，也沒有年齡與性別。定序平台在 metadata 是 PacBio Sequel IIe 單端擴增子。</p>
+  </article>
+
+  <article class="ref t2d">
+    <span class="tag t2d">T2D · PRJNA1447078</span>
+    <p>Zhang P, Jiang L, Ge C, Yang J, Shi Z, Liang X, Fan Z. The gut-inflammation-hearing axis in diabetic patients aged 30–55: exploring microbiome-mediated pathways to auditory complications. <em>BMC Microbiology</em>. 2026 Aug 15.</p>
+    <p>DOI <a href="https://doi.org/10.1186/s12866-026-05504-8">10.1186/s12866-026-05504-8</a>。100 名 30–55 歲 T2DM、聽力受損 43%、糞便 16S，與這份 metadata 的人數、年齡範圍和分組一致。論文另測了 TNF-α、IL-6、IL-1β、hs-CRP 與 LBP，並報告含 LBP 的組合指標 AUC 0.921。這些發炎指標不在 <code>t2d_groups.csv</code>。</p>
+  </article>
+
+  <article class="ref crc">
+    <span class="tag crc">CRC · PRJNA989099</span>
+    <p>Tesolato S, Ortega-Hernández A, Gómez-Garre D, Claver P, De Juan C, De la Serna S, et al. Gut microbiota profiles in feces and paired tumor and non-tumor tissues from Colorectal Cancer patients. Relationship to the Body Mass Index. <em>PLoS ONE</em>. 2023;18(10):e0292551.</p>
+    <p>DOI <a href="https://doi.org/10.1371/journal.pone.0292551">10.1371/journal.pone.0292551</a> · PMC10553240。論文寫明 BioProject PRJNA989099，113 個樣本、45 位病人。方法是 Ion 16S Metagenomics Kit，擴增 V2、V4、V8 與 V3、V6–7、V9，在 Ion S5、Ion 530 chip 上定序。metadata 的 instrument 欄寫的是 Ion Torrent Proton。研究沒有獨立健康對照，主要比較糞便、腫瘤與鄰近組織，以及 BMI、腫瘤位置。</p>
+  </article>
+
+  <article class="ref pd">
+    <span class="tag pd">PD · PRJDB8639</span>
+    <p>Nishiwaki H, Hamaguchi T, Ito M, Ishida T, Maeda T, Kashihara K, Tsuboi Y, Ueyama J, Shimamura T, Mori H, Kurokawa K, Katsuno M, Hirayama M, Ohno K. Short-chain fatty acid-producing gut microbiota is decreased in Parkinson’s disease but not in rapid-eye-movement sleep behavior disorder. <em>mSystems</em>. 2020;5:e00797-20.</p>
+    <p>DOI <a href="https://doi.org/10.1128/mSystems.00797-20">10.1128/mSystems.00797-20</a> · PMID 33293403。論文寫明帕金森氏症的 FASTQ 是 DRA009229，也就是這份 PRJDB8639 裡 223 名 PD 與 137 名對照。方法是糞便 16S V3–V4（341F / 805R），MiSeq 2×300，QIIME2 與 DADA2。同一篇的 26 名 iRBD 在另一個登錄號 DRA009322。年齡、性別、BMI、便秘與用藥寫在論文，沒有出現在 ENA 樣本表。</p>
+  </article>
+
+  <article class="ref ad">
+    <span class="tag ad">AD · PRJNA554111</span>
+    <p>Zhuang ZQ, Shen LL, Li WW, et al. Gut microbiota is altered in patients with Alzheimer’s disease. <em>Journal of Alzheimer’s Disease</em>. 2018;63(4):1337–1346.</p>
+    <p>DOI <a href="https://doi.org/10.3233/JAD-180176">10.3233/JAD-180176</a> · PMID 29758946。第三軍醫大學大坪醫院神經內科。43 名 AD 與 43 名年齡、性別配平的認知正常對照，糞便 16S rRNA。SRA 把文庫登錄成 METAGENOMIC / OTHER，讀長為 2×301 bp、約 3–4.5 萬 pairs，與 MiSeq 16S 相符。公開 metadata 沒有 MMSE 或其他認知分數。查詢樣品 SRR9671446 是對照組 CON17。</p>
+  </article>
+</section>
+
+<footer>
+  <p>人數與深度由 metadata 計算，日期 2026-10-05。可分析樣本是 IBD 77、T2D 100、CRC 113、AD 86、PD 360；受試者 77 + 100 + 45 + 86 + 360 = 668。PD 的 BioProject 另有 330 個沒有分組的 run，未計入。AD 的年齡與醫院來自 NCBI BioSample。論文出處見上方參考文獻。</p>
+</footer>
+
+</div>
+</main>
+</body>
+</html>
